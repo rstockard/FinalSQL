@@ -1,0 +1,99 @@
+---
+title: "SQL"
+output: html_document
+---
+Roxanne Stockard-Hicks
+
+Thus begins my SQL tutorial.  Bring in Lahman and sqldf packages for setup.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Lahman)
+library(sqldf)
+```
+
+## From the Beginning
+
+Thus begins my SQL tutorial.  
+This query from the Lahman database is looking for basic batting information for Yankees players in the year 1927.
+
+```{r }
+query<-"SELECT playerID,teamID,yearID,HR FROM Batting
+WHERE teamID='NYA' and yearID=1927"
+sqldf(query)
+```
+
+Here's an example from the Yankees considering number of home runs instead of year on the team.  This filter is searching for players with more than 40 career home runs.
+
+```{r}
+query<-"SELECT playerID,teamID,yearID,HR FROM Batting
+WHERE teamID='NYA' and HR>40"
+sqldf(query)
+```
+
+This query narrows the field, looking for high home runs AND low strikeouts:
+```{r}
+query<-"SELECT playerID,teamID,yearID,HR FROM Batting
+WHERE teamID='NYA' and HR>40 and SO<60"
+sqldf(query)
+```
+
+## Getting Creative
+
+This query is a little different.  Instead of one filter per parameter, this query identifies a range of years,  1970 or greater on one end and 1979 or less on the other.
+
+```{r}
+query<-"SELECT playerID,teamID,yearID,HR FROM Batting
+WHERE teamID='PHI' and HR>30 and yearID>=1970 and yearID<=1979"
+sqldf(query)
+```
+
+Once you have the results you want, you can organize the results from the outset.  For instance, the Order By function will organize your results by the parameter you specify, in this case home runs from the largest, descending:
+
+```{r}
+query<-"SELECT playerID,yearID,HR 
+FROM Batting
+WHERE HR>50
+ORDER BY HR DESC"
+
+sqldf(query)
+```
+
+##Further Organized
+
+Lastly, in order to further sort your results, you can aggregate by type, in this case consolidating the information by individual player.
+
+```{r}
+query<-"SELECT playerID,yearID,avg(HR)FROM Batting
+GROUP BY playerID
+HAVING avg(HR)>30
+ORDER BY avg(HR) DESC"
+
+sqldf(query)
+```
+
+##Expanding data
+
+If you find you don't have access to the particular data you want, try joining two different tables together.  In order to join them, you need to find at least one column they have in common so that all the rows and columns match up correctly.  In this case, Batting and Teams are joined on the teamID factor.
+
+```{r}
+query<-"SELECT playerID,Batting.yearID,name,Batting.HR
+FROM Batting INNER JOIN Teams
+ON Batting.teamID=Teams.teamID and Batting.yearID=Teams.yearID
+WHERE playerID='ruthba01'"
+
+sqldf(query)
+```
+
+Here's another example of how Inner Joins work.  This version joins Battin and Master on playerID, and then filters results for those with more than 50 home runs.
+
+```{r}
+query<-"SELECT nameFirst,nameLast,teamID,yearID,HR
+FROM Batting INNER JOIN Master
+ON Batting.playerID=Master.playerID
+WHERE HR>50
+ORDER BY HR"
+
+sqldf(query)
+```
+
